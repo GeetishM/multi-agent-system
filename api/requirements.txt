@@ -1,0 +1,35 @@
+#   API Framework 
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+sse-starlette==2.1.0
+pydantic==2.7.1
+
+#  LLM  
+groq==0.9.0
+
+#  Task Queue  
+celery==5.4.0
+redis==5.0.4
+
+#  Vector DB  
+chromadb==0.5.3
+
+#  Embeddings (local, free)  
+sentence-transformers==3.0.1
+
+#   Database   
+sqlalchemy==2.0.30
+aiosqlite==0.20.0
+
+#   Token Counting 
+tiktoken==0.7.0
+
+#   Code Sandbox 
+RestrictedPython==8.1
+
+#   Utilities 
+python-dotenv==1.0.1
+httpx==0.27.0
+tenacity==8.3.0
+structlog==24.2.0
+python-ulid==2.2.0
