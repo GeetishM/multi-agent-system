@@ -1,0 +1,99 @@
+version: "3.9"
+
+services:
+
+  # ── Main API Server ───────────────────────────────
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: mas_api
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CHROMA_PERSIST_DIR=${CHROMA_PERSIST_DIR}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - MAX_RETRIES=${MAX_RETRIES}
+      - ORCHESTRATOR_BUDGET=${ORCHESTRATOR_BUDGET}
+      - DECOMPOSITION_BUDGET=${DECOMPOSITION_BUDGET}
+      - RAG_BUDGET=${RAG_BUDGET}
+      - CRITIQUE_BUDGET=${CRITIQUE_BUDGET}
+      - SYNTHESIS_BUDGET=${SYNTHESIS_BUDGET}
+      - COMPRESSION_BUDGET=${COMPRESSION_BUDGET}
+      - META_BUDGET=${META_BUDGET}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - mas_network
+
+  # ── Celery Background Worker ──────────────────────
+  worker:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: mas_worker
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CHROMA_PERSIST_DIR=${CHROMA_PERSIST_DIR}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - MAX_RETRIES=${MAX_RETRIES}
+      - ORCHESTRATOR_BUDGET=${ORCHESTRATOR_BUDGET}
+      - DECOMPOSITION_BUDGET=${DECOMPOSITION_BUDGET}
+      - RAG_BUDGET=${RAG_BUDGET}
+      - CRITIQUE_BUDGET=${CRITIQUE_BUDGET}
+      - SYNTHESIS_BUDGET=${SYNTHESIS_BUDGET}
+      - COMPRESSION_BUDGET=${COMPRESSION_BUDGET}
+      - META_BUDGET=${META_BUDGET}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - mas_network
+
+  # ── Redis (Celery broker + result backend) ────────
+  redis:
+    image: redis:7-alpine
+    container_name: mas_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - mas_network
+
+  # ── Log Query UI (simple web interface) ───────────
+  redis_ui:
+    image: rediscommander/redis-commander:latest
+    container_name: mas_redis_ui
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - mas_network
+
+volumes:
+  redis_data:
+
+networks:
+  mas_network:
+    driver: bridge
