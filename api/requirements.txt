@@ -19,6 +19,7 @@ sentence-transformers==3.0.1
 
 # ── Database ──────────────────────────────────────
 sqlalchemy==2.0.30
+sqlalchemy>=2.0.36
 aiosqlite==0.20.0
 
 # ── Token Counting ────────────────────────────────

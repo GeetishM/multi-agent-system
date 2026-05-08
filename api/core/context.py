@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
-from python_ulid import ULID
+from ulid import ULID
 
 
 class AgentID(str, Enum):
