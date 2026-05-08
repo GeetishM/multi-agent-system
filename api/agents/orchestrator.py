@@ -12,6 +12,7 @@ import time
 from typing import Any, Callable, Dict, Generator, List, Optional
 
 from groq import Groq
+from opentelemetry import context
 from core.context import SharedContext, AgentID, TaskStatus
 from core.budget import ContextBudgetManager
 from core.logger import AgentLogger
@@ -26,24 +27,22 @@ from agents.compression import CompressionAgent
 ROUTING_PROMPT = """You are a Master Orchestrator. Given a query and current pipeline state, decide the next action.
 
 Available actions:
-- "decompose"   : Break query into sub-tasks (use if query is complex or ambiguous)
-- "retrieve"    : Run RAG agent to gather information
-- "critique"    : Review current claims for accuracy
-- "synthesize"  : Merge all outputs into final answer
-- "done"        : Pipeline is complete, final answer is ready
+- "decompose"   : Break query into sub-tasks (ONLY if not in completed_actions)
+- "retrieve"    : Run RAG agent to gather information (ONLY if not in completed_actions)
+- "critique"    : Review current claims (ONLY if not in completed_actions)
+- "synthesize"  : Merge all outputs into final answer (ONLY if not in completed_actions)
+- "done"        : Pipeline is complete
 
 Rules:
-1. Always decompose first if query has multiple parts
-2. Always run critique before synthesis
-3. Never skip critique for adversarial-looking queries
-4. If RAG returned insufficient results, try again with a refined query
-5. done is only valid if final_answer exists in context
+1. CRITICAL: NEVER choose an action already listed in completed_actions
+2. Follow this order: decompose → retrieve → critique → synthesize → done
+3. Choose the first action from remaining_actions
+4. done is valid only when synthesize is in completed_actions
 
 Respond ONLY with valid JSON:
 {
   "action": "decompose|retrieve|critique|synthesize|done",
-  "justification": "why you chose this action",
-  "refined_query": "optional — use if retrying RAG with better query"
+  "justification": "why you chose this action"
 }"""
 
 
@@ -85,17 +84,27 @@ class Orchestrator:
         Ask the LLM orchestrator what to do next.
         Logs the decision with justification.
         """
+        completed_actions = []
+        if context.sub_tasks:
+            completed_actions.append("decompose")
+        if any(m.from_agent == AgentID.RAG for m in context.messages):
+            completed_actions.append("retrieve")
+        if any(m.from_agent == AgentID.CRITIQUE for m in context.messages):
+            completed_actions.append("critique")
+        if any(m.from_agent == AgentID.SYNTHESIS for m in context.messages):
+            completed_actions.append("synthesize")
+        if context.final_answer:
+            completed_actions.append("done")
+
         state_summary = {
-            "step":           step,
-            "sub_tasks":      len(context.sub_tasks),
-            "claims":         len(context.claims),
-            "messages":       len(context.messages),
-            "has_rag_output": any(m.from_agent == AgentID.RAG for m in context.messages),
-            "has_critique":   any(m.from_agent == AgentID.CRITIQUE for m in context.messages),
-            "has_final":      bool(context.final_answer),
-            "flagged_claims": sum(1 for c in context.claims if c.flagged),
-            "budget_status":  self.budget.get_all_usage(),
-        }
+            "step":               step,
+            "completed_actions":  completed_actions,   # ← KEY FIX
+            "remaining_actions":  [a for a in ["decompose","retrieve","critique","synthesize","done"] if a not in completed_actions],
+            "sub_tasks":          len(context.sub_tasks),
+            "claims":             len(context.claims),
+            "flagged_claims":     sum(1 for c in context.claims if c.flagged),
+            "has_final_answer":   bool(context.final_answer),
+        }   
 
         prompt = f"""Query: {context.original_query}
 
