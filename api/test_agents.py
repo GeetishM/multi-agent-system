@@ -1,6 +1,7 @@
 import os, sys
 sys.path.insert(0, '.')
-os.environ.setdefault("GROQ_API_KEY", "your-key-here")  # replace with real key
+from dotenv import load_dotenv
+load_dotenv()
 
 from core.context import SharedContext
 from core.budget import ContextBudgetManager

@@ -10,6 +10,8 @@ build/
 
 # Environment
 .env
+**/.env
+api/.env
 
 # Database
 *.db
