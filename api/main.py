@@ -1,8 +1,11 @@
 """Multi-Agent System — FastAPI Entry Point"""
 import os
 from contextlib import asynccontextmanager
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
@@ -55,22 +58,18 @@ app.include_router(rewrite.router, prefix="/api/v1", tags=["Rewrite"])
 app.include_router(reeval.router,  prefix="/api/v1", tags=["Re-eval"])
 
 
+# pyrefly: ignore [missing-import]
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "multi-agent-system", "version": "1.0.0"}
 
+# pyrefly: ignore [missing-import]
+from fastapi.responses import FileResponse
 
 @app.get("/")
 async def root():
-    return {
-        "service": "Multi-Agent LLM System",
-        "docs":    "/docs",
-        "health":  "/health",
-        "endpoints": {
-            "query":   "POST /api/v1/query",
-            "trace":   "GET  /api/v1/trace/{job_id}",
-            "eval":    "GET  /api/v1/eval",
-            "rewrite": "POST /api/v1/rewrite/{rewrite_id}",
-            "reeval":  "POST /api/v1/reeval",
-        }
-    }
+    return FileResponse("static/index.html")

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega AI - Agent Console</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: 100%;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #38bdf8;
+        }
+        .input-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+        input {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus {
+            border-color: #38bdf8;
+        }
+        button {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            background: #0ea5e9;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0284c7;
+        }
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+        .terminal {
+            flex: 1;
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .log-entry { padding: 0.25rem 0; line-height: 1.4; border-bottom: 1px solid #1e293b; }
+        .log-entry:last-child { border-bottom: none; }
+        .sys { color: #94a3b8; }
+        .orchestrator { color: #c084fc; font-weight: bold; }
+        .agent { color: #34d399; }
+        .budget { color: #facc15; font-size: 0.8rem; }
+        .error { color: #ef4444; }
+        .final { color: #38bdf8; font-weight: bold; padding-top: 1rem; }
+        
+        /* Stats row */
+        .stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div>
+        <h1>Mega AI - Real-Time Pipeline</h1>
+        <div class="stats" id="stats">Ready.</div>
+    </div>
+    
+    <div class="input-box">
+        <input type="text" id="queryInput" placeholder="Ask a complex question..." onkeypress="handleKeyPress(event)">
+        <button id="submitBtn" onclick="submitQuery()">Send</button>
+    </div>
+
+    <div class="terminal" id="terminal">
+        <div class="log-entry sys">System initialized. Waiting for input...</div>
+    </div>
+</div>
+
+<script>
+    const terminal = document.getElementById('terminal');
+    const submitBtn = document.getElementById('submitBtn');
+    const queryInput = document.getElementById('queryInput');
+    const stats = document.getElementById('stats');
+    
+    let eventSource = null;
+
+    function log(message, type = 'sys') {
+        const div = document.createElement('div');
+        div.className = `log-entry ${type}`;
+        div.innerHTML = message;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') submitQuery();
+    }
+
+    async function submitQuery() {
+        const query = queryInput.value.trim();
+        if (!query) return;
+
+        // Reset UI
+        if (eventSource) {
+            eventSource.close();
+        }
+        terminal.innerHTML = '';
+        submitBtn.disabled = true;
+        queryInput.disabled = true;
+        
+        log(`> ${query}`, 'sys');
+
+        try {
+            // Initiate the POST request to create the job
+            const response = await fetch('/api/v1/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+
+            if (!response.ok) throw new Error('Failed to start query');
+
+            // Set up SSE reading
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            
+            readStream(reader, decoder);
+            
+        } catch (error) {
+            log(`Error: ${error.message}`, 'error');
+            resetInput();
+        }
+    }
+
+    async function readStream(reader, decoder) {
+        let buffer = '';
+        
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+                resetInput();
+                break;
+            }
+            
+            buffer += decoder.decode(value, { stream: true });
+            
+            let lines = buffer.split('\n\n');
+            buffer = lines.pop(); // keep the last incomplete chunk
+            
+            for (let line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6);
+                    try {
+                        const payload = JSON.parse(dataStr);
+                        handleEvent(payload);
+                    } catch (e) {
+                        console.error('JSON parse error', e);
+                    }
+                }
+            }
+        }
+    }
+
+    function handleEvent(payload) {
+        const { event, data } = payload;
+        
+        switch (event) {
+            case 'job_created':
+                log(`[System] Job created with ID: ${data.job_id}`, 'sys');
+                break;
+            case 'pipeline_start':
+                log(`[System] Orchestrator taking control...`, 'sys');
+                break;
+            case 'routing_decision':
+                log(`[Orchestrator] Decided to route to: <b>${data.action}</b><br><span style="font-size:0.8rem; color:#64748b">Justification: ${data.justification}</span>`, 'orchestrator');
+                break;
+            case 'agent_start':
+                log(`[${data.agent_id.toUpperCase()}] Started processing. Remaining tokens: ${data.budget_remaining}`, 'agent');
+                break;
+            case 'agent_end':
+                log(`[${data.agent_id.toUpperCase()}] Completed step. Used ${data.usage.used}/${data.usage.budget} tokens.`, 'agent');
+                break;
+            case 'budget_update':
+                const keys = Object.keys(data);
+                const totalUsed = keys.reduce((acc, k) => acc + data[k].used, 0);
+                stats.innerHTML = `Total Pipeline Tokens Used: ${totalUsed}`;
+                break;
+            case 'compression_triggered':
+                log(`[WARNING] Context budget > 85% for ${data.agent_id}. Triggering Compression Agent!`, 'budget');
+                break;
+            case 'pipeline_end':
+                log(`[Final Output]<br><br>${data.final_answer.replace(/\n/g, '<br>')}`, 'final');
+                if (data.violations && data.violations.length > 0) {
+                    log(`Policy Violations: ${JSON.stringify(data.violations)}`, 'error');
+                }
+                resetInput();
+                break;
+            case 'error':
+                log(`[ERROR] Pipeline failed: ${data.error}`, 'error');
+                resetInput();
+                break;
+            case 'timeout':
+                log(`[ERROR] Stream timed out.`, 'error');
+                resetInput();
+                break;
+        }
+    }
+
+    function resetInput() {
+        submitBtn.disabled = false;
+        queryInput.disabled = false;
+        queryInput.focus();
+    }
+</script>
+</body>
+</html>
