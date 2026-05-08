@@ -1,0 +1,5 @@
+RAG (Retrieval-Augmented Generation) combines parametric and non-parametric memory for better LLM answers.
+Transformers use self-attention mechanisms to relate tokens across sequences.
+Vector databases store embeddings for fast semantic search in AI applications.
+Multi-agent systems use specialized agents orchestrated by a master controller.
+Context window management prevents token overflow in production LLM systems.

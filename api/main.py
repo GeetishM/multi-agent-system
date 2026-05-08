@@ -1,29 +1,37 @@
-"""
-Multi-Agent System — FastAPI Entry Point
-"""
+"""Multi-Agent System — FastAPI Entry Point"""
 import os
 from contextlib import asynccontextmanager
-
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+load_dotenv()
 
 from core.database import init_db
 from core.logger import get_logger
 from routers import query, trace, eval, rewrite, reeval
 
-load_dotenv()
 logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup and shutdown events."""
     logger.info("Starting Multi-Agent System...")
     await init_db()
-    logger.info("Database initialized.")
+
+    # Seed sample DB on startup
+    try:
+        from tools.sql_lookup import seed_sample_db
+        import pathlib
+        pathlib.Path("/app/data").mkdir(parents=True, exist_ok=True)
+        seed_sample_db("/app/data/sample.db")
+        logger.info("Sample DB seeded.")
+    except Exception as e:
+        logger.warning("sample_db_seed_failed", error=str(e))
+
+    logger.info("Multi-Agent System ready.")
     yield
-    logger.info("Shutting down Multi-Agent System.")
+    logger.info("Shutting down.")
 
 
 app = FastAPI(
@@ -40,7 +48,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Register Routers (5 endpoints) ────────────────
 app.include_router(query.router,   prefix="/api/v1", tags=["Query"])
 app.include_router(trace.router,   prefix="/api/v1", tags=["Trace"])
 app.include_router(eval.router,    prefix="/api/v1", tags=["Eval"])
@@ -50,4 +57,20 @@ app.include_router(reeval.router,  prefix="/api/v1", tags=["Re-eval"])
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "multi-agent-system"}
+    return {"status": "ok", "service": "multi-agent-system", "version": "1.0.0"}
+
+
+@app.get("/")
+async def root():
+    return {
+        "service": "Multi-Agent LLM System",
+        "docs":    "/docs",
+        "health":  "/health",
+        "endpoints": {
+            "query":   "POST /api/v1/query",
+            "trace":   "GET  /api/v1/trace/{job_id}",
+            "eval":    "GET  /api/v1/eval",
+            "rewrite": "POST /api/v1/rewrite/{rewrite_id}",
+            "reeval":  "POST /api/v1/reeval",
+        }
+    }

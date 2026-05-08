@@ -1,29 +1,24 @@
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    curl \
+    gcc g++ curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for Docker layer caching)
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install CPU-only torch first (avoids 3GB CUDA download)
+RUN pip install --no-cache-dir --timeout=120 \
+    torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
 
-# Copy all source code
+# Install everything else with longer timeout
+RUN pip install --no-cache-dir --timeout=120 -r requirements.txt
+
 COPY . .
 
-# Create data directories
-RUN mkdir -p /app/data/chroma_data /app/logs
+RUN mkdir -p /app/data/chroma_data /app/logs /app/eval_results
 
-# Expose API port
 EXPOSE 8000
 
-# Default command: start the FastAPI server
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
