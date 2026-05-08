@@ -21,7 +21,7 @@ class BaseAgent(ABC):
         self.budget  = budget_manager
         self.logger  = logger
         self.llm     = llm_client or Groq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model   = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+        self.model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
     def chat(self, messages: list, max_tokens: int = 1024, temperature: float = 0.3) -> str:
         """Call Groq LLM and return text response."""
