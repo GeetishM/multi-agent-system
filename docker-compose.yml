@@ -26,6 +26,8 @@ services:
     container_name: mas_worker
     command: celery -A worker.celery_app worker --loglevel=info --concurrency=2
     env_file: .env
+    environment:
+      - PYTHONPATH=/app
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
