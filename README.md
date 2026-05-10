@@ -31,6 +31,7 @@
 | [📊 Evaluation Pipeline](#-evaluation-pipeline) | [💰 Context Budget](#-context-budget-management) | [📡 API Endpoints](#-api-endpoints) |
 | [📦 Services](#-services) | [📁 Project Structure](#-project-structure) | [🌐 Environment Variables](#-environment-variables) |
 | [🛠️ Tech Stack](#%EF%B8%8F-tech-stack) | [🧪 Running Tests](#-running-tests) | [⚠️ Known Limitations](#%EF%B8%8F-known-limitations) |
+| [🗺️ Game Plan](#%EF%B8%8F-game-plan-what-we-built-in-order) | [💾 Data & Baselines](#-data-handling-modeling--baselines) | |
 
 </div>
 
@@ -53,6 +54,22 @@ docker compose up
 > 📖 Visit **http://localhost:8000/docs** — interactive API docs  
 > 📊 Visit **http://localhost:8081** — Redis Commander UI  
 > 🔑 Get your free Groq API key at [console.groq.com/keys](https://console.groq.com/keys)
+
+---
+
+## 🗺️ Game Plan (What We Built in Order)
+
+1. **Project structure + Docker Compose skeleton**
+2. **Shared context schema + Context Budget Manager**
+3. **Tool implementations** (all 4 with failure contracts)
+4. **All agents** (Decomposition → RAG → Critique → Synthesis → Compression → Meta)
+5. **Orchestrator** with dynamic routing
+6. **FastAPI server** with SSE streaming
+7. **Celery worker** for async processing
+8. **Eval harness** with 15 test cases + 6-dimensional scoring
+9. **Self-improving prompt loop** + approval endpoint
+10. **Structured logging + execution trace endpoint**
+11. **README + architecture diagram**
 
 ---
 
@@ -556,6 +573,26 @@ python test_orchestrator.py
 # Run 3-case eval (saves Groq quota)
 python test_eval.py
 ```
+
+---
+
+## 💾 Data Handling, Modeling & Baselines
+
+### Exploratory Data Analysis (EDA) & Data Modeling
+The system's retrieval foundation is built on structured local data representations:
+- **Local Knowledge Base**: Seeded documents and product data are analyzed and chunked before embedding into ChromaDB to ensure meaningful semantic boundaries.
+- **SQL Data Modeling**: The SQLite database features normalized schemas (e.g., customers, sales, products) designed specifically to test the LLM's natural language to SQL join capabilities.
+- **Eval Data Modeling**: The 15 test cases were modeled strictly against known edge cases (adversarial prompts, ambiguous phrasing) rather than random user inputs, ensuring a high-signal evaluation dataset.
+
+### No Data Leakage
+The Evaluation Pipeline operates under strict zero-leakage constraints:
+- **Separation of Concerns**: The evaluation test cases are completely distinct from the data seeded in the RAG ChromaDB store and the SQLite database.
+- **Prompt Isolation**: The Meta Agent's self-improving prompt loop only updates agent prompts based on aggregated failure *dimensions*, and is strictly prevented from directly ingesting or memorizing the eval answers.
+
+### Baselines & Pragmatism
+Before adopting a complex multi-agent architecture, the system was benchmarked against a naïve zero-shot baseline:
+- **Baseline Comparison**: A single `gpt-4o` / `llama-3.3-70b` prompt fails consistently on the 5 adversarial and ambiguous test cases (hallucinating SQL schemas, failing multi-hop retrieval). The Orchestrator + RAG + Critique pipeline was introduced *only* because the baseline failed to reach the required accuracy threshold.
+- **Pragmatism**: The system does not over-engineer. Tools are only invoked when necessary (checked by the `Tool Efficiency` eval metric), and compression is only run when 85% of the budget is consumed. 
 
 ---
 
