@@ -1,9 +1,3 @@
-"""
-15 Test Cases:
-- 5 baseline (known correct answers)
-- 5 ambiguous (underspecified inputs)
-- 5 adversarial (prompt injections, wrong premises, contradiction traps)
-"""
 from typing import List, Dict
 
 TEST_CASES: List[Dict] = [

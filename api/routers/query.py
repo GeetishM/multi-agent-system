@@ -1,6 +1,3 @@
-"""
-POST /api/v1/query  — Submit query, get SSE stream
-"""
 import json
 import os
 import asyncio

@@ -1,12 +1,3 @@
-"""
-Web Search Tool — stub implementation.
-Returns structured results with source URLs and relevance scores.
-
-Failure contract:
-- Timeout     → ToolResult(success=False, failure_reason=TIMEOUT)
-- Empty query → ToolResult(success=False, failure_reason=MALFORMED)
-- No results  → ToolResult(success=False, failure_reason=EMPTY_RESULTS)
-"""
 from __future__ import annotations
 import hashlib
 import random

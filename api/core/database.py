@@ -1,7 +1,3 @@
-"""
-Database models and initialization.
-All eval runs, jobs, logs, prompt rewrites stored here.
-"""
 from __future__ import annotations
 import os
 from datetime import datetime

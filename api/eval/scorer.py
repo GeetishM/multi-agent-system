@@ -1,8 +1,3 @@
-"""
-Multi-dimensional scorer — 6 dimensions per test case.
-Each dimension produces: numeric score (0.0-1.0) + written justification.
-No third-party eval framework used.
-"""
 from __future__ import annotations
 import os
 import re

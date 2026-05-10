@@ -1,4 +1,3 @@
-"""POST /api/v1/rewrite/{rewrite_id} — Approve or reject prompt rewrite"""
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

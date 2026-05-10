@@ -1,9 +1,7 @@
-"""Base Agent — all agents inherit from this."""
 from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-
 from groq import Groq
 from core.context import SharedContext, AgentID
 from core.budget import ContextBudgetManager

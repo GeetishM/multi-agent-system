@@ -1,4 +1,3 @@
-"""POST /api/v1/reeval — Re-run eval on previously failed cases"""
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

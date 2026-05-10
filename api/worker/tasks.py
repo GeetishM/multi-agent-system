@@ -1,4 +1,3 @@
-"""Celery background tasks."""
 import os
 import json
 from datetime import datetime

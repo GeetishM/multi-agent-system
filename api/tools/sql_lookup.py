@@ -1,13 +1,3 @@
-"""
-SQL Lookup Tool
-Converts natural language to SQL via the LLM, queries local SQLite DB.
-
-Failure contract:
-- Empty question  → MALFORMED
-- No DB found     → EXECUTION error
-- No rows         → EMPTY_RESULTS
-- Bad SQL         → EXECUTION error with stderr
-"""
 from __future__ import annotations
 import os
 import sqlite3

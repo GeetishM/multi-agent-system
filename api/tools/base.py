@@ -1,7 +1,3 @@
-"""
-Base Tool class — all tools inherit from this.
-Defines the failure contract every tool must implement.
-"""
 from __future__ import annotations
 import time
 from abc import ABC, abstractmethod

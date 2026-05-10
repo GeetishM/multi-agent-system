@@ -1,4 +1,3 @@
-"""Celery background tasks — pipeline, eval, re-eval."""
 import os, json
 from datetime import datetime
 from worker.celery_app import celery_app

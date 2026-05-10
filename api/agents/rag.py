@@ -1,8 +1,3 @@
-"""
-RAG Agent — Multi-hop Retrieval Augmented Generation
-MUST use >= 2 retrieved chunks before forming an answer.
-MUST cite which chunk contributed to which part of the answer.
-"""
 from __future__ import annotations
 import json
 import os
@@ -48,7 +43,9 @@ class RAGAgent(BaseAgent):
     def _init_chroma(self):
         """Initialize ChromaDB for local vector storage."""
         try:
+            # pyrefly: ignore [missing-import]
             import chromadb
+            # pyrefly: ignore [missing-import]
             from chromadb.config import Settings
             persist_dir = os.getenv("CHROMA_PERSIST_DIR", "./data/chroma_data")
             os.makedirs(persist_dir, exist_ok=True)

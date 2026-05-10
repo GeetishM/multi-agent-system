@@ -1,9 +1,3 @@
-"""
-Compression Agent
-Called when an agent exceeds 85% of its context budget.
-Lossless for structured data (tool outputs, scores, citations).
-Lossy only for conversational filler.
-"""
 from __future__ import annotations
 import json
 from core.context import SharedContext, AgentID, AgentMessage

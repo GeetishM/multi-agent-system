@@ -1,13 +1,3 @@
-"""
-Self-Reflection Tool
-Agent re-reads its own previous outputs within the session
-and identifies contradictions.
-
-Failure contract:
-- No previous outputs  → EMPTY_RESULTS
-- Empty agent_id       → MALFORMED
-- No contradictions found is a SUCCESS (returns empty list)
-"""
 from __future__ import annotations
 import os
 from typing import Any, Dict, List, Optional

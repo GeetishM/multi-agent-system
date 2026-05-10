@@ -1,9 +1,3 @@
-"""
-Meta Agent — Self-Improving Prompt Loop
-Reads eval failures, identifies worst-performing prompt,
-proposes a rewrite with structured diff and justification.
-Proposed rewrites are stored but NOT auto-applied.
-"""
 from __future__ import annotations
 import json
 import difflib

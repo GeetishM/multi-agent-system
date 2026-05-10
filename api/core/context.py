@@ -1,11 +1,8 @@
-"""
-Shared Context Object — all inter-agent communication passes through this.
-Agents NEVER call each other directly.
-"""
 from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 from ulid import ULID
 

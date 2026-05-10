@@ -1,20 +1,8 @@
-"""
-Code Execution Sandbox Tool
-Runs Python snippets safely using RestrictedPython.
-Returns stdout, stderr, exit_code.
-
-Failure contract:
-- Timeout         → ToolResult(success=False, failure_reason=TIMEOUT)
-- Empty code      → ToolResult(success=False, failure_reason=MALFORMED)
-- Runtime error   → success=True, data contains stderr + exit_code=1
-  (execution errors are NOT tool failures — they are valid results)
-"""
 from __future__ import annotations
 import io
 import sys
 import traceback
 from typing import Any, Dict, Optional
-
 from RestrictedPython import compile_restricted, safe_globals, safe_builtins
 from RestrictedPython.PrintCollector import PrintCollector
 from tools.base import BaseTool, FailureReason

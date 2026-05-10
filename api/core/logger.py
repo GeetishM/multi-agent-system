@@ -1,10 +1,3 @@
-"""
-Structured Logger
-- Consistent schema: timestamp, agent_id, event_type,
-  input_hash, output_hash, latency, token_count, violations
-- Writes to both console and DB
-- Every event queryable by job_id
-"""
 from __future__ import annotations
 import hashlib
 import logging

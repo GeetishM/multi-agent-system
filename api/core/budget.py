@@ -1,10 +1,4 @@
-"""
-Context Budget Manager
-- Tracks token consumption per agent per job
-- Enforces declared budgets
-- Flags policy violations (never silently truncates)
-- Agents call check_budget() before adding to context
-"""
+
 from __future__ import annotations
 import hashlib
 import os

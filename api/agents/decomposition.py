@@ -1,8 +1,3 @@
-"""
-Decomposition Agent
-Breaks ambiguous queries into typed sub-tasks with dependency graphs.
-Dependent sub-tasks do NOT execute until dependencies resolve.
-"""
 from __future__ import annotations
 import json
 from typing import List

@@ -1,7 +1,3 @@
-"""
-Eval Harness — runs all 15 test cases through the full pipeline.
-Stores results with full reproducibility (exact prompts, tool calls, outputs).
-"""
 from __future__ import annotations
 import json
 import os

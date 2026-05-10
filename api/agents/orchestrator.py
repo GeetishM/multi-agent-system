@@ -1,16 +1,8 @@
-"""
-Master Orchestrator Agent
-- Dynamically decides which sub-agents to invoke, in what order
-- Mediates ALL inter-agent communication
-- Handles tool fallback logic explicitly in code
-- Logs every routing decision with justification
-"""
 from __future__ import annotations
 import json
 import os
 import time
 from typing import Any, Callable, Dict, Generator, List, Optional
-
 from groq import Groq
 from opentelemetry import context
 from core.context import SharedContext, AgentID, TaskStatus

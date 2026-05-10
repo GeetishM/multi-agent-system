@@ -1,4 +1,3 @@
-"""GET /api/v1/trace/{job_id} — Full execution trace"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db

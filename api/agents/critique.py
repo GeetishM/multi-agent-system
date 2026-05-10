@@ -1,9 +1,3 @@
-"""
-Critique Agent
-Reviews outputs of every other agent.
-Assigns confidence score PER CLAIM (not whole output).
-Flags specific text spans it disagrees with.
-"""
 from __future__ import annotations
 import json
 from core.context import SharedContext, AgentID, AgentMessage, Claim

@@ -1,4 +1,3 @@
-"""GET /api/v1/eval — Latest eval run summary"""
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession

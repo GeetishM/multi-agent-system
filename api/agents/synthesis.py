@@ -1,9 +1,3 @@
-"""
-Synthesis Agent
-Merges outputs from all sub-agents.
-Resolves contradictions flagged by the critique agent.
-Produces a final answer with a provenance map.
-"""
 from __future__ import annotations
 import json
 from core.context import SharedContext, AgentID, AgentMessage
