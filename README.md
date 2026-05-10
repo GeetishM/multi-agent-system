@@ -1,19 +1,45 @@
-# Multi-Agent LLM System
+<div align="center">
 
-> Production-grade multi-agent system with dynamic orchestration, retrieval-augmented generation, adversarial evaluation, and a self-improving prompt loop.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=3,9,20&height=200&section=header&text=Multi-Agent%20LLM%20System%20🤖&fontSize=42&fontColor=fff&animation=twinkling&fontAlignY=38&desc=Production-Grade%20Orchestration%20%7C%20RAG%20%7C%20Adversarial%20Eval%20%7C%20Self-Improving%20Prompts&descAlignY=58&descSize=15&descColor=80CBC4"/>
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)](https://fastapi.tiangolo.com)
-[![Groq](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3%2070B-orange)](https://groq.com)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docker.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=26C6DA&center=true&vCenter=true&width=750&lines=Dynamic+LLM+Orchestration+—+No+Hardcoded+Routing+%F0%9F%A7%A0;7+Specialized+Agents+%7C+4+Tools+%7C+6-Dim+Eval+%F0%9F%93%8A;Self-Improving+Prompt+Loop+with+Human-in-the-Loop+%E2%9C%85;RAG+%2B+Critique+%2B+Synthesis+%2B+Compression+Pipeline+%F0%9F%94%84;Real-Time+SSE+Streaming+via+FastAPI+%2B+Celery+%E2%9A%A1)](https://git.io/typing-svg)
+
+<br/>
+
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Groq](https://img.shields.io/badge/Groq-LLaMA%203.3%2070B-F55036?style=for-the-badge)](https://groq.com)
+[![Celery](https://img.shields.io/badge/Celery-Redis%20Queue-37814A?style=for-the-badge&logo=celery&logoColor=white)](https://docs.celeryq.dev)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector%20DB-FF6F00?style=for-the-badge)](https://trychroma.com)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-4CAF50?style=for-the-badge)](LICENSE)
+
+> *Production-grade multi-agent system with dynamic orchestration, retrieval-augmented generation, adversarial evaluation, and a self-improving prompt loop* 🤖
+
+</div>
 
 ---
 
-## Quick Start
+## 📋 Table of Contents
+
+<div align="center">
+
+| | | |
+|:---:|:---:|:---:|
+| [⚡ Quick Start](#-quick-start) | [🏗️ System Architecture](#%EF%B8%8F-system-architecture) | [🔄 Agent Pipeline](#-agent-pipeline) |
+| [🔁 Self-Improving Loop](#-self-improving-prompt-loop) | [🤖 Agents](#-agents) | [🛠️ Tools](#%EF%B8%8F-tools) |
+| [📊 Evaluation Pipeline](#-evaluation-pipeline) | [💰 Context Budget](#-context-budget-management) | [📡 API Endpoints](#-api-endpoints) |
+| [📦 Services](#-services) | [📁 Project Structure](#-project-structure) | [🌐 Environment Variables](#-environment-variables) |
+| [🛠️ Tech Stack](#%EF%B8%8F-tech-stack) | [🧪 Running Tests](#-running-tests) | [⚠️ Known Limitations](#%EF%B8%8F-known-limitations) |
+
+</div>
+
+---
+
+## ⚡ Quick Start
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/GeetishM/multi-agent-system.git
 cd multi-agent-system
 
 # Copy and configure environment
@@ -24,206 +50,313 @@ cp .env.example .env
 docker compose up
 ```
 
-Visit **http://localhost:8000/docs** for the interactive API documentation.  
-Visit **http://localhost:8081** for the Redis Commander UI.
-Visit **http://localhost:8000** for the Real-Time Agent Streaming UI.
-
-> Get your free Groq API key at [console.groq.com/keys](https://console.groq.com/keys)
+> 📖 Visit **http://localhost:8000/docs** — interactive API docs  
+> 📊 Visit **http://localhost:8081** — Redis Commander UI  
+> 🔑 Get your free Groq API key at [console.groq.com/keys](https://console.groq.com/keys)
 
 ---
 
-## Architecture
+## 🏗️ System Architecture
 
+```mermaid
+flowchart TD
+    CLIENT([🌐 Client\nSSE Stream / REST API]):::client
+
+    CLIENT <-->|HTTP / SSE| API
+
+    subgraph API[⚙️ FastAPI Server — :8000]
+        EP[5 REST Endpoints\n+ SSE Streaming]:::api
+    end
+
+    API -->|Enqueue Job| QUEUE
+
+    subgraph QUEUE[📨 Redis Queue — :6379]
+        RQ[Celery Broker\n+ Result Backend\n+ SSE Pub/Sub]:::redis
+    end
+
+    QUEUE -->|Async Execution| WORKER
+
+    subgraph WORKER[⚡ Celery Worker]
+        WT[Async Pipeline Execution]:::worker
+    end
+
+    WORKER --> ORCH
+
+    subgraph ORCH[🧠 Orchestrator — LLM-Driven Dynamic Router]
+        CTX[📋 Shared Context Object\nPydantic Schema — passed between agents]:::ctx
+        BUD[💰 Context Budget Manager\ntiktoken — tracks tokens per agent per job]:::budget
+
+        subgraph PIPELINE[Agent Pipeline — dynamic order decided at runtime]
+            A1[1️⃣ Decomposition Agent\nTyped sub-tasks + dep graph]:::agent
+            A2[2️⃣ RAG Agent\nMulti-hop ChromaDB + web]:::agent
+            A3[3️⃣ Critique Agent\nPer-claim confidence scoring]:::agent
+            A4[4️⃣ Synthesis Agent\nContradiction resolution]:::agent
+            A5[5️⃣ Compression Agent\nOn-demand context reduction]:::agent
+            A6[6️⃣ Meta Agent\nPost-eval prompt improvement]:::agent
+            A1 --> A2 --> A3 --> A4
+            A5 -.->|triggered at 85% budget| A2
+            A6 -.->|runs after eval| A4
+        end
+    end
+
+    ORCH --> TOOLS
+
+    subgraph TOOLS[🔧 Tool Registry]
+        T1[🔍 Web Search\nrelevance scoring]:::tool
+        T2[💻 Code Sandbox\nRestrictedPython]:::tool
+        T3[🗃️ SQL Lookup\nNL → SQL → SQLite]:::tool
+        T4[🪞 Self Reflection\ncontradiction detector]:::tool
+    end
+
+    TOOLS --> STORAGE
+
+    subgraph STORAGE[🗄️ Storage Layer]
+        S1[(SQLite\njobs · logs · eval · rewrites)]:::db
+        S2[(ChromaDB\nvector store)]:::db
+        S3[(Redis\npub/sub + queue)]:::db
+    end
+
+    classDef client  fill:#1A237E,color:#fff,stroke:none
+    classDef api     fill:#006064,color:#fff,stroke:none
+    classDef redis   fill:#B71C1C,color:#fff,stroke:none
+    classDef worker  fill:#1B5E20,color:#fff,stroke:none
+    classDef ctx     fill:#37474F,color:#fff,stroke:#80CBC4,stroke-dasharray:3
+    classDef budget  fill:#37474F,color:#fff,stroke:#80CBC4,stroke-dasharray:3
+    classDef agent   fill:#1A237E,color:#fff,stroke:#5C6BC0
+    classDef tool    fill:#4A148C,color:#fff,stroke:none
+    classDef db      fill:#E65100,color:#fff,stroke:none
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client                               │
-│              (SSE Stream / REST API)                        │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                  FastAPI Server (:8000)                      │
-│         5 REST endpoints + SSE streaming                     │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                Redis Queue (:6379)                           │
-│            Celery broker + result backend                    │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                  Celery Worker                               │
-│           Async pipeline execution                           │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                    Orchestrator                              │
-│         LLM-driven dynamic routing engine                    │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │             Shared Context Object                   │   │
-│  │          (Pydantic schema, passed between agents)   │   │
-│  └─────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │           Context Budget Manager                    │   │
-│  │     (tiktoken — tracks tokens per agent per job)    │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-│   Agent Pipeline (dynamic order, decided at runtime):       │
-│   1. Decomposition Agent  →  typed sub-tasks + dep graph    │
-│   2. RAG Agent            →  multi-hop ChromaDB + web       │
-│   3. Critique Agent       →  per-claim confidence scoring   │
-│   4. Synthesis Agent      →  contradiction resolution       │
-│   5. Compression Agent    →  on-demand context reduction    │
-│   6. Meta Agent           →  post-eval prompt improvement   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                    Tool Registry                             │
-│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│   │  Web Search  │  │ Code Sandbox │  │  SQL Lookup  │    │
-│   │    (stub)    │  │  (Restricted │  │  (NL → SQL)  │    │
-│   │  + relevance │  │   Python)    │  │   → SQLite)  │    │
-│   └──────────────┘  └──────────────┘  └──────────────┘    │
-│                      ┌──────────────┐                       │
-│                      │Self Reflection│                      │
-│                      │(contradiction │                      │
-│                      │  detector)   │                       │
-│                      └──────────────┘                       │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                   Storage Layer                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │    SQLite    │  │   ChromaDB   │  │    Redis     │    │
-│  │  (jobs, logs,│  │  (vector     │  │  (pub/sub    │    │
-│  │  eval, rewrite│  │   store)    │  │   + queue)   │    │
-│  └──────────────┘  └──────────────┘  └──────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+
+---
+
+## 🔄 Agent Pipeline
+
+```mermaid
+flowchart LR
+    Q([❓ User Query]):::input
+
+    Q --> D
+
+    D[1️⃣ Decomposition\nAgent]:::agent
+    D -->|typed sub-tasks\n+ dep graph| R
+
+    R[2️⃣ RAG Agent]:::agent
+    R -->|ChromaDB + Web\nmulti-hop retrieval| C
+
+    C[3️⃣ Critique Agent]:::agent
+    C -->|per-claim confidence\n0.0–1.0 scoring| S
+
+    S[4️⃣ Synthesis Agent]:::agent
+    S -->|contradiction\nresolution| OUT
+
+    COMP[5️⃣ Compression Agent]:::compress
+    META[6️⃣ Meta Agent]:::meta
+
+    R -.->|85% budget hit| COMP
+    COMP -.->|compressed context| S
+    OUT -.->|after eval cycle| META
+    META -.->|pending rewrite\nawaits human approval| DB[(🗄️ DB)]:::db
+
+    OUT([✅ Final Answer\n+ Provenance Map]):::output
+
+    classDef input    fill:#1A237E,color:#fff,stroke:none
+    classDef agent    fill:#006064,color:#fff,stroke:none
+    classDef compress fill:#E65100,color:#fff,stroke:none
+    classDef meta     fill:#4A148C,color:#fff,stroke:none
+    classDef db       fill:#37474F,color:#fff,stroke:#80CBC4,stroke-dasharray:3
+    classDef output   fill:#1B5E20,color:#fff,stroke:none
 ```
 
 ---
 
-## Services
+## 🔁 Self-Improving Prompt Loop
 
-| Service | Port | Purpose |
-|---|---|---|
-| `mas_api` | 8000 | FastAPI server, SSE streaming, all endpoints |
-| `mas_worker` | — | Celery background worker for async pipeline jobs |
-| `mas_redis` | 6379 | Message broker, result backend, SSE pub/sub |
-| `mas_redis_ui` | 8081 | Redis Commander — visual queue/log browser |
+```mermaid
+flowchart TD
+    E([🧪 Eval Run\n15 Test Cases]):::start
+    M[🤖 Meta Agent\nReads failure cases]:::agent
+    I[🔍 Identifies worst\nagent + dimension]:::process
+    P[✏️ Proposes Rewrite\nstored as pending]:::process
+    H{👤 Human Review\nPOST /api/v1/rewrite/id}:::decision
+    APP[✅ Approved]:::approve
+    REJ[❌ Rejected]:::reject
+    RE[🔄 POST /api/v1/reeval\nRe-run failed cases only]:::process
+    DELTA[📊 Performance Delta\nstored + queryable]:::output
+    AUDIT[(🗄️ Full Audit Trail\nTimestamps · Diffs · Scores)]:::db
 
----
+    E --> M --> I --> P --> H
+    H -->|approve| APP --> RE --> DELTA
+    H -->|reject| REJ
+    DELTA --> AUDIT
+    APP --> AUDIT
+    REJ --> AUDIT
+    DELTA -.->|next cycle| E
 
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/v1/query` | Submit a query; receive real-time SSE stream showing agent activity, tool calls, and budget |
-| `GET` | `/api/v1/trace/{job_id}` | Full execution trace: exact agent sequence, tool calls, handoffs, timings |
-| `GET` | `/api/v1/eval` | Latest eval run summary broken down by category and scoring dimension |
-| `POST` | `/api/v1/eval/run` | Trigger a full 15-case eval run in the background |
-| `POST` | `/api/v1/rewrite/{rewrite_id}` | Submit human approval or rejection for a pending prompt rewrite |
-| `GET` | `/api/v1/rewrite/pending` | List all pending prompt rewrites awaiting human review |
-| `POST` | `/api/v1/reeval` | Re-run eval on previously failed cases using latest approved prompt |
-| `GET` | `/health` | Health check |
-
-All error responses include a machine-readable `error_code`, a human-readable `message`, and `job_id` where applicable.
-
----
-
-## Agents
-
-### Orchestrator
-The master controller. Uses an LLM to dynamically decide at runtime which sub-agent to invoke next, in what order, and with what context. Routing decisions are never hardcoded — they are made via structured reasoning and logged with justification. Handles RAG retries with refined queries (up to 2 retries), compression triggers at 85% budget, and policy violation logging.
-
-**Decision boundaries:** The orchestrator calls the LLM with the current pipeline state (`completed_actions`, `remaining_actions`, `claims`, `budget_status`) and receives a JSON routing decision with justification. It falls back to deterministic routing if the LLM call fails.
-
-### Decomposition Agent
-Breaks ambiguous queries into typed sub-tasks with explicit dependency relationships. Sub-tasks have types: `retrieval`, `calculation`, `comparison`, `summarization`, `analysis`, `code_execution`, `data_lookup`. Dependent sub-tasks do not execute until their dependencies resolve. Produces a maximum of 6 sub-tasks per query.
-
-**Decision boundaries:** If the input is short and unambiguous, produces a single sub-task. If JSON parsing fails, falls back to a single generic analysis task to avoid blocking the pipeline.
-
-### RAG Agent
-Performs multi-hop retrieval across at least two sources before forming an answer — ChromaDB (local vector store) and the web search tool. Every factual claim is tagged with `[chunk_id:X]` citations. Single-hop retrieval is explicitly not sufficient. Uses cosine similarity scoring in ChromaDB and keyword-overlap relevance scoring for web results.
-
-**Decision boundaries:** If fewer than 2 chunks are retrieved, the agent reports insufficient context rather than hallucinating. If the LLM returns malformed JSON, the raw response is stored in context metadata for debugging.
-
-### Critique Agent
-Reviews the output of every other agent at the claim level — never at the whole-output level. Assigns a confidence score (0.0–1.0) per claim and flags the specific text span it disagrees with, along with a reason. Claims below 0.6 confidence are flagged. If the budget is exceeded, applies a shallow critique (reduces all confidence scores by 0.1) rather than skipping.
-
-**Decision boundaries:** Only runs if there are claims in the shared context. Produces structured JSON per claim. If JSON parsing fails, preserves original confidence scores rather than zeroing them out.
-
-### Synthesis Agent
-Merges outputs from all sub-agents, resolves contradictions flagged by the critique agent, and produces a final answer with a provenance map linking each sentence to its source agent and chunk. Contradictions are resolved internally — they are never surfaced to the user. If the context budget is exceeded, falls back to returning the best RAG output directly.
-
-**Decision boundaries:** Prioritizes higher-confidence claims when resolving contradictions. Documents every resolution decision in `resolved_contradictions` metadata.
-
-### Compression Agent
-Called by the orchestrator when any agent reaches 85% of its token budget. Applies lossy compression only to conversational filler. Structured data — tool outputs, numeric scores, citations, JSON — is always preserved losslessly. Returns compressed text marked with `[COMPRESSED]`. If the compression agent itself exceeds its own budget, hard-truncates at 1000 characters and logs a policy violation.
-
-**Decision boundaries:** Only compresses; never summarizes structured data. Compression ratio is logged for observability.
-
-### Meta Agent
-Runs after each eval cycle. Reads the failure cases from the eval results, identifies the worst-performing agent-dimension combination, and proposes a rewritten system prompt with a structured diff and justification. The proposed rewrite is stored as `pending` in the database. It is never automatically applied — a human must approve it via the API.
-
-**Decision boundaries:** Analyses only the top 3 failure cases to stay within context budget. If no dimension scores below 0.6 on average, returns `no_rewrite_needed`. Does not propose rewrites for the orchestrator routing logic.
+    classDef start   fill:#1A237E,color:#fff,stroke:none
+    classDef agent   fill:#4A148C,color:#fff,stroke:none
+    classDef process fill:#006064,color:#fff,stroke:none
+    classDef decision fill:#37474F,color:#fff,stroke:none
+    classDef approve fill:#1B5E20,color:#fff,stroke:none
+    classDef reject  fill:#B71C1C,color:#fff,stroke:none
+    classDef output  fill:#E65100,color:#fff,stroke:none
+    classDef db      fill:#37474F,color:#fff,stroke:#80CBC4,stroke-dasharray:3
+```
 
 ---
 
-## Tools
+## 🤖 Agents
 
-### Web Search
-Returns structured results with source URLs, relevance scores, and chunk IDs. Currently a stub backed by a curated knowledge base with keyword-overlap scoring. In production, replace with Tavily or SerpAPI.
+<details>
+<summary><b>🧠 Orchestrator — Master Controller (click to expand)</b></summary>
 
-- **Timeout:** returns `failure_reason: TIMEOUT`
-- **Empty query:** returns `failure_reason: MALFORMED`
-- **No results:** returns `failure_reason: EMPTY_RESULTS`
+<br/>
 
-### Code Sandbox
-Executes Python snippets using RestrictedPython. Returns `stdout`, `stderr`, and `exit_code`. Blocks dangerous imports (`os`, `sys`, `subprocess`, etc.). Runtime errors are valid results (not tool failures) — they are returned with `exit_code: 1`.
+The master controller. Uses an LLM to dynamically decide at runtime which sub-agent to invoke next, in what order, and with what context. Routing decisions are **never hardcoded** — they are made via structured reasoning and logged with justification.
 
-- **Empty code:** returns `failure_reason: MALFORMED`
-- **Blocked imports:** returns `failure_reason: MALFORMED` at validation
-- **Runtime exceptions:** returned in `stderr` with `exit_code: 1`
+- Handles RAG retries with refined queries (up to 2 retries)
+- Triggers compression at **85% budget**
+- Logs all policy violations
 
-### SQL Lookup
-Converts natural language questions to SQLite SQL — via rule-based patterns locally, or via the Groq LLM when a client is provided. Queries a local SQLite database seeded with sample products, sales, and customer data. Returns column names, rows, and row count.
+**Decision boundaries:** Called with current pipeline state (`completed_actions`, `remaining_actions`, `claims`, `budget_status`) → receives JSON routing decision with justification. Falls back to deterministic routing if LLM call fails.
 
-- **Empty question:** returns `failure_reason: MALFORMED`
-- **SQL execution error:** raises `RuntimeError` caught by base tool as `EXECUTION`
-- **No rows returned:** returns `failure_reason: EMPTY_RESULTS`
+</details>
 
-### Self Reflection
-An agent calls this tool to re-read its own previous outputs and detect contradictions with a new claim. Uses rule-based pattern matching (e.g. "increase" vs "decrease") locally, or calls the LLM for semantic contradiction detection when a client is available.
+<details>
+<summary><b>🔀 Decomposition Agent — Sub-task Planner (click to expand)</b></summary>
 
-- **No previous outputs:** returns `failure_reason: EMPTY_RESULTS`
-- **Empty agent_id:** returns `failure_reason: MALFORMED`
-- **No contradictions found:** returns `success: True` with empty contradictions list (this is a valid result)
+<br/>
+
+Breaks ambiguous queries into typed sub-tasks with explicit dependency relationships.
+
+**Sub-task types:** `retrieval` · `calculation` · `comparison` · `summarization` · `analysis` · `code_execution` · `data_lookup`
+
+- Dependent sub-tasks do not execute until dependencies resolve
+- Max **6 sub-tasks** per query
+
+**Decision boundaries:** Short/unambiguous input → single sub-task. JSON parse failure → single generic analysis task to avoid blocking pipeline.
+
+</details>
+
+<details>
+<summary><b>📚 RAG Agent — Multi-Hop Retriever (click to expand)</b></summary>
+
+<br/>
+
+Performs multi-hop retrieval across **at least two sources** before forming an answer — ChromaDB (local vector store) and the web search tool.
+
+- Every factual claim tagged with `[chunk_id:X]` citations
+- Uses cosine similarity scoring (ChromaDB) + keyword-overlap relevance (web)
+- **Single-hop retrieval is explicitly not sufficient**
+
+**Decision boundaries:** Fewer than 2 chunks retrieved → reports insufficient context rather than hallucinating. Malformed LLM JSON → raw response stored in context metadata for debugging.
+
+</details>
+
+<details>
+<summary><b>🔍 Critique Agent — Per-Claim Evaluator (click to expand)</b></summary>
+
+<br/>
+
+Reviews output of every other agent at the **claim level** — never at the whole-output level.
+
+- Assigns confidence score (0.0–1.0) per claim
+- Flags specific text spans + reasons for claims below **0.6 confidence**
+- At budget exceeded: applies shallow critique (reduces all scores by 0.1) rather than skipping
+
+**Decision boundaries:** Only runs if claims exist in shared context. Produces structured JSON per claim. Parse failure → preserves original scores rather than zeroing them.
+
+</details>
+
+<details>
+<summary><b>🔗 Synthesis Agent — Contradiction Resolver (click to expand)</b></summary>
+
+<br/>
+
+Merges outputs from all sub-agents, resolves contradictions flagged by the Critique Agent, and produces a final answer with a **provenance map** linking each sentence to its source agent and chunk.
+
+- Contradictions resolved internally — **never surfaced to the user**
+- Budget exceeded → falls back to best RAG output directly
+
+**Decision boundaries:** Prioritizes higher-confidence claims. Documents every resolution decision in `resolved_contradictions` metadata.
+
+</details>
+
+<details>
+<summary><b>🗜️ Compression Agent — Context Reducer (click to expand)</b></summary>
+
+<br/>
+
+Called by the orchestrator when any agent reaches **85%** of its token budget. Applies lossy compression **only to conversational filler**.
+
+- Structured data (tool outputs, numeric scores, citations, JSON) → always preserved **losslessly**
+- Returns compressed text marked with `[COMPRESSED]`
+- Budget exceeded by compression agent itself → hard-truncates at 1000 chars + logs policy violation
+
+**Decision boundaries:** Only compresses, never summarizes structured data. Compression ratio logged for observability.
+
+</details>
+
+<details>
+<summary><b>🧬 Meta Agent — Prompt Improver (click to expand)</b></summary>
+
+<br/>
+
+Runs after each eval cycle. Reads failure cases, identifies the **worst-performing agent-dimension combination**, and proposes a rewritten system prompt with structured diff and justification.
+
+- Proposed rewrite stored as `pending` in the database
+- **Never automatically applied** — human must approve via API
+
+**Decision boundaries:** Analyses only top 3 failure cases (context budget). If no dimension scores below 0.6 on average → returns `no_rewrite_needed`. Does not propose rewrites for orchestrator routing logic.
+
+</details>
 
 ---
 
-## Evaluation Pipeline
+## 🛠️ Tools
+
+<div align="center">
+
+| Tool | Description | Failure Codes |
+|:---:|:---|:---|
+| 🔍 **Web Search** | Structured results with URLs, relevance scores, chunk IDs. Stub backed by curated knowledge base. Replace with Tavily/SerpAPI in production. | `TIMEOUT` · `MALFORMED` · `EMPTY_RESULTS` |
+| 💻 **Code Sandbox** | Executes Python via RestrictedPython. Returns `stdout`, `stderr`, `exit_code`. Blocks dangerous imports (`os`, `sys`, `subprocess`). | `MALFORMED` (empty/blocked) · `exit_code: 1` (runtime) |
+| 🗃️ **SQL Lookup** | Converts natural language → SQLite SQL via rule-based patterns or Groq LLM. Queries sample products, sales, customer data. | `MALFORMED` · `EXECUTION` · `EMPTY_RESULTS` |
+| 🪞 **Self Reflection** | Agent calls this to re-read its own previous outputs and detect contradictions with a new claim. Rule-based locally, LLM-based when client available. | `EMPTY_RESULTS` · `MALFORMED` |
+
+</div>
+
+---
+
+## 📊 Evaluation Pipeline
 
 ### Test Cases (15 total)
 
+<div align="center">
+
 | Category | Count | Description |
-|---|---|---|
-| Baseline | 5 | Straightforward queries with known correct answers |
-| Ambiguous | 5 | Underspecified inputs designed to test decomposition quality |
-| Adversarial | 5 | Prompt injections, factually confident wrong premises, contradiction traps |
+|:---:|:---:|:---|
+| ✅ Baseline | 5 | Straightforward queries with known correct answers |
+| 🌀 Ambiguous | 5 | Underspecified inputs designed to test decomposition quality |
+| ⚔️ Adversarial | 5 | Prompt injections, confident wrong premises, contradiction traps |
+
+</div>
 
 ### Scoring Dimensions (6 per case)
 
-| Dimension | What it measures | Scoring method |
-|---|---|---|
-| Correctness | How accurate is the final answer vs expected | LLM judge |
-| Citation | Are inline chunk citations present and accurate | Rule-based + coverage |
-| Contradiction Resolution | Were flagged contradictions resolved before reaching the user | Structural check |
-| Tool Efficiency | Penalises unnecessary tool calls and retries | Rule-based |
-| Budget Compliance | Did agents stay within their token budgets | Policy violation count |
-| Critique Agreement | Does the final answer align with critique agent's assessments | Claim exclusion rate |
+<div align="center">
 
-Every dimension produces a numeric score (0.0–1.0) and a written justification string. Every eval run is stored in the database with full reproducibility: exact prompts sent, tool calls made, outputs received, scores, and timestamps. Re-running the eval on the same inputs produces a diff-able JSON output so regressions are immediately visible.
+| Dimension | What It Measures | Method |
+|:---:|:---|:---:|
+| 🎯 Correctness | Final answer accuracy vs expected | LLM judge |
+| 📎 Citation | Inline chunk citations present and accurate | Rule-based + coverage |
+| 🔗 Contradiction Resolution | Contradictions resolved before reaching user | Structural check |
+| ⚡ Tool Efficiency | Penalizes unnecessary tool calls and retries | Rule-based |
+| 💰 Budget Compliance | Did agents stay within token budgets | Policy violation count |
+| 🤝 Critique Agreement | Final answer aligns with critique assessments | Claim exclusion rate |
+
+</div>
+
+Every dimension produces a numeric score (0.0–1.0) and a written justification. Every eval run is stored with **full reproducibility**: exact prompts, tool calls, outputs, scores, and timestamps.
 
 ### Running the Eval
 
@@ -231,9 +364,8 @@ Every dimension produces a numeric score (0.0–1.0) and a written justification
 # Full 15-case eval via API (runs in background)
 curl -X POST http://localhost:8000/api/v1/eval/run
 
-# Quick 3-case local test
-cd api
-python test_eval.py
+# Quick 3-case local test (saves Groq quota)
+cd api && python test_eval.py
 
 # Check results
 curl http://localhost:8000/api/v1/eval
@@ -241,88 +373,74 @@ curl http://localhost:8000/api/v1/eval
 
 ---
 
-## Self-Improving Prompt Loop
+## 💰 Context Budget Management
 
-```
-Eval Run
-   │
-   ▼
-Meta Agent reads failure cases
-   │
-   ▼
-Identifies worst agent + dimension
-   │
-   ▼
-Proposes rewrite (stored as "pending")
-   │
-   ▼
-Human reviews: POST /api/v1/rewrite/{id}
-   {"action": "approve", "reviewed_by": "your_name"}
-   │
-   ▼
-POST /api/v1/reeval
-   │
-   ▼
-Re-runs only previously failed cases
-   │
-   ▼
-Performance delta stored and queryable
-```
+Each agent declares a maximum token budget. The `ContextBudgetManager` tracks consumption per agent per job using **tiktoken** (`cl100k_base` encoding).
 
-Every proposed rewrite, every approval or rejection, and every performance delta is stored with timestamps and is queryable. The loop is fully auditable end to end.
+<div align="center">
+
+| Agent | Default Budget | Trigger |
+|:---:|:---:|:---|
+| 🧠 Orchestrator | 4,000 tokens | Falls back to deterministic routing at limit |
+| 🔀 Decomposition | 3,000 tokens | Returns single task at limit |
+| 📚 RAG | 5,000 tokens | Reports insufficient context at limit |
+| 🔍 Critique | 3,000 tokens | Applies shallow critique (−0.1) at limit |
+| 🔗 Synthesis | 4,000 tokens | Returns best RAG output at limit |
+| 🗜️ Compression | 2,000 tokens | Hard-truncates at 1000 chars at limit |
+| 🧬 Meta | 3,000 tokens | Returns `no_rewrite_needed` at limit |
+
+</div>
+
+> Agents that exceed their budget are **caught and logged as policy violations — never silently truncated**. At 85% usage, compression is triggered automatically. All budgets configurable via environment variables.
 
 ---
 
-## Context Budget Management
+## 📡 API Endpoints
 
-Each agent declares a maximum token budget. The `ContextBudgetManager` tracks consumption per agent per job using `tiktoken` (cl100k_base encoding).
+<div align="center">
 
-| Agent | Default Budget |
-|---|---|
-| Orchestrator | 4,000 tokens |
-| Decomposition | 3,000 tokens |
-| RAG | 5,000 tokens |
-| Critique | 3,000 tokens |
-| Synthesis | 4,000 tokens |
-| Compression | 2,000 tokens |
-| Meta | 3,000 tokens |
+| Method | Endpoint | Description |
+|:---:|:---:|:---|
+| `POST` | `/api/v1/query` | Submit query — real-time SSE stream with agent activity, tool calls, budget |
+| `GET` | `/api/v1/trace/{job_id}` | Full trace: agent sequence, tool calls, handoffs, timings |
+| `GET` | `/api/v1/eval` | Latest eval summary by category and scoring dimension |
+| `POST` | `/api/v1/eval/run` | Trigger full 15-case eval run in background |
+| `POST` | `/api/v1/rewrite/{id}` | Submit human approval or rejection for pending rewrite |
+| `GET` | `/api/v1/rewrite/pending` | List all pending rewrites awaiting human review |
+| `POST` | `/api/v1/reeval` | Re-run eval on previously failed cases with latest approved prompt |
+| `GET` | `/health` | Health check |
 
-Agents that attempt to exceed their budget are caught and logged as policy violations — they are never silently truncated. At 85% usage, the orchestrator triggers the compression agent before proceeding. All budgets are configurable via environment variables.
+</div>
 
----
-
-## Structured Logging
-
-Every event is logged with a consistent schema:
-
-```json
-{
-  "log_id": "01KR3...",
-  "job_id": "01KR3...",
-  "agent_id": "rag",
-  "event_type": "agent_end",
-  "input_hash": "a1b2c3d4e5f6...",
-  "output_hash": "f6e5d4c3b2a1...",
-  "latency_ms": 1419.08,
-  "token_count": 325,
-  "policy_violation": false,
-  "violation_detail": null,
-  "metadata": {},
-  "timestamp": "2026-05-08T10:14:22Z"
-}
-```
-
-Logs are queryable via `GET /api/v1/trace/{job_id}`, which reconstructs the exact sequence of agent decisions, tool calls, and handoffs in order.
+> All error responses include a machine-readable `error_code`, a human-readable `message`, and `job_id` where applicable.
 
 ---
 
-## Project Structure
+## 📦 Services
+
+<div align="center">
+
+| Service | Port | Purpose |
+|:---:|:---:|:---|
+| `mas_api` | `:8000` | FastAPI server, SSE streaming, all endpoints |
+| `mas_worker` | — | Celery background worker for async pipeline jobs |
+| `mas_redis` | `:6379` | Message broker, result backend, SSE pub/sub |
+| `mas_redis_ui` | `:8081` | Redis Commander — visual queue/log browser |
+
+</div>
+
+---
+
+## 📁 Project Structure
+
+<details>
+<summary><b>📂 Click to expand full structure</b></summary>
 
 ```
 multi-agent-system/
-├── docker-compose.yml
-├── .env.example
-├── README.md
+├── 🐳 docker-compose.yml
+├── 🔐 .env.example
+├── 📖 README.md
 ├── api/
 │   ├── Dockerfile
 │   ├── requirements.txt
@@ -340,7 +458,7 @@ multi-agent-system/
 │   │   ├── base.py              # BaseTool with failure contract
 │   │   ├── web_search.py        # Structured search stub
 │   │   ├── code_sandbox.py      # RestrictedPython executor
-│   │   ├── sql_lookup.py        # NL→SQL→SQLite
+│   │   ├── sql_lookup.py        # NL → SQL → SQLite
 │   │   └── self_reflection.py   # Contradiction detector
 │   ├── core/
 │   │   ├── context.py           # SharedContext Pydantic schema
@@ -359,14 +477,19 @@ multi-agent-system/
         └── sample_docs.txt
 ```
 
+</details>
+
 ---
 
-## Environment Variables
+## 🌐 Environment Variables
+
+<details>
+<summary><b>⚙️ Click to expand full .env reference</b></summary>
 
 ```env
 # Required
-GROQ_API_KEY=gsk_...                    # Get from console.groq.com/keys
-GROQ_MODEL=llama-3.3-70b-versatile      # Model to use
+GROQ_API_KEY=gsk_...                      # Get from console.groq.com/keys
+GROQ_MODEL=llama-3.3-70b-versatile        # Model to use
 
 # Database
 DATABASE_URL=sqlite+aiosqlite:////app/data/multi_agent.db
@@ -392,59 +515,31 @@ COMPRESSION_BUDGET=2000
 META_BUDGET=3000
 ```
 
+</details>
+
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
+
+<div align="center">
 
 | Layer | Technology | Why |
-|---|---|---|
-| LLM | Groq (LLaMA 3.3 70B) | Free tier, fast inference, function calling |
-| API framework | FastAPI + SSE-Starlette | Async, automatic docs, native SSE support |
-| Task queue | Celery + Redis | Async job processing, pub/sub for SSE |
-| Vector DB | ChromaDB | Local, free, cosine similarity search |
-| Embeddings | sentence-transformers | Local, no API cost |
-| Database | SQLite + SQLAlchemy async | Zero-config, sufficient for single-node |
-| Token counting | tiktoken | Same tokenizer as most LLMs |
-| Code sandbox | RestrictedPython | Safe Python execution without Docker-in-Docker |
-| Containers | Docker Compose | One-command startup |
+|:---:|:---:|:---|
+| 🧠 LLM | ![Groq](https://img.shields.io/badge/Groq-LLaMA%203.3%2070B-F55036?style=flat) | Free tier, fast inference, function calling |
+| ⚙️ API | ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white) + SSE-Starlette | Async, automatic docs, native SSE support |
+| 📨 Queue | ![Celery](https://img.shields.io/badge/Celery-37814A?style=flat) + ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white) | Async job processing, pub/sub for SSE |
+| 📦 Vector DB | `ChromaDB` | Local, free, cosine similarity search |
+| 🔢 Embeddings | `sentence-transformers` | Local, no API cost |
+| 🗄️ Database | `SQLite` + SQLAlchemy async | Zero-config, sufficient for single-node |
+| 🔤 Tokens | `tiktoken` | Same tokenizer as most LLMs |
+| 💻 Sandbox | `RestrictedPython` | Safe Python execution without Docker-in-Docker |
+| 🐳 Infra | ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white) | One-command startup |
+
+</div>
 
 ---
 
-## Known Limitations
-
-**Web search is stubbed.** The web search tool uses a static 10-document knowledge base with keyword-overlap scoring. It simulates real search behaviour for the eval harness, but does not fetch live internet data. In production, replace with Tavily API or SerpAPI (both have free tiers).
-
-**ChromaDB uses the default embedding model.** The `all-MiniLM-L6-v2` model (sentence-transformers default) is general-purpose. For a domain-specific system, a fine-tuned embedder would significantly improve retrieval quality.
-
-**The self-improving loop applies rewrites at runtime only.** Approved prompt rewrites update the in-memory agent configuration for the re-eval run, but are not automatically written back to the source `.py` files. This is intentional — automatic code modification without review is unsafe. The proposed prompt is stored in the database and can be manually applied.
-
-**Code sandbox is not fully isolated.** RestrictedPython prevents the most dangerous operations, but is not a true security boundary. For production, use a containerised sandbox (e.g. AWS Lambda, Firecracker) for untrusted code execution.
-
-**Celery workers run as root in Docker.** This is acceptable for development but not for production. Use `--uid` to specify a non-root user, or switch to a rootless container runtime.
-
-**SQLite has concurrency limits.** Write-heavy workloads with multiple concurrent Celery workers will hit SQLite's single-writer constraint. Switch to PostgreSQL for production multi-worker deployments.
-
-**Eval scoring uses an LLM judge for correctness.** The LLM judge can be inconsistent across runs. For fully reproducible scoring, replace the correctness dimension with a deterministic metric (e.g. BERTScore, ROUGE-L) or use a dedicated eval model.
-
----
-
-## What I Would Build Next
-
-**Real web search integration.** Replace the stub with Tavily API. The interface is already defined — it's a one-file swap in `tools/web_search.py`.
-
-**PostgreSQL backend.** Drop-in replacement for SQLite in `database.py`. Enables concurrent workers, proper indexing on `job_id` and `timestamp`, and connection pooling.
-
-**True token-by-token SSE streaming.** Currently the system streams agent-level events. Groq supports streaming completions — wiring each agent's `chat()` method to stream individual tokens would give a much richer client experience.
-
-**Automated rewrite CI pipeline.** A GitHub Action that runs the eval on every PR, and if a specific dimension drops below a threshold, automatically proposes a rewrite and opens a review PR.
-
-**Agent memory with episodic recall.** Store successful reasoning chains in ChromaDB. On similar future queries, inject the most relevant past chain as a few-shot example, reducing LLM calls and improving consistency.
-
-**Human-in-the-loop dashboard.** A lightweight React UI (or even a Streamlit app) that shows live pipeline progress, eval results, pending rewrites, and budget usage — replacing the current Swagger-only interface.
-
----
-
-## Running Tests
+## 🧪 Running Tests
 
 ```bash
 cd api
@@ -464,10 +559,79 @@ python test_eval.py
 
 ---
 
-## License
+## ⚠️ Known Limitations
+
+<details>
+<summary><b>📋 Click to expand limitations & roadmap</b></summary>
+
+<br/>
+
+| Limitation | Detail | Production Fix |
+|:---|:---|:---|
+| 🔍 **Web search is stubbed** | Static 10-doc knowledge base with keyword scoring | Replace `tools/web_search.py` with Tavily or SerpAPI |
+| 🧲 **Generic embeddings** | `all-MiniLM-L6-v2` is general-purpose | Fine-tuned domain embedder for better retrieval |
+| 🔁 **Rewrites not persisted to code** | Approved rewrites update in-memory only | Intentional — automatic code modification without review is unsafe |
+| 🔐 **Code sandbox not fully isolated** | RestrictedPython is not a true security boundary | Use containerized sandbox (AWS Lambda, Firecracker) for production |
+| 👤 **Celery runs as root in Docker** | Acceptable for dev, not production | Use `--uid` or rootless container runtime |
+| ✍️ **SQLite concurrency limits** | Single-writer constraint with multiple Celery workers | Switch to PostgreSQL for multi-worker deployments |
+| ⚖️ **LLM judge inconsistency** | Correctness scoring can vary across eval runs | Replace with BERTScore, ROUGE-L, or a dedicated eval model |
+
+</details>
+
+---
+
+## 🚀 What I Would Build Next
+
+<div align="center">
+
+| Feature | Description |
+|:---:|:---|
+| 🔍 **Real Web Search** | Replace stub with Tavily API — one-file swap in `tools/web_search.py` |
+| 🐘 **PostgreSQL Backend** | Drop-in for SQLite — enables concurrent workers + proper indexing |
+| ⚡ **Token-by-Token SSE** | Wire each agent's `chat()` to stream individual tokens via Groq streaming |
+| 🔁 **Rewrite CI Pipeline** | GitHub Action that runs eval on every PR and auto-proposes rewrites on regression |
+| 🧠 **Episodic Agent Memory** | Store successful reasoning chains in ChromaDB for few-shot injection |
+| 🖥️ **Human-in-the-Loop Dashboard** | React/Streamlit UI for live pipeline progress, eval results, pending rewrites |
+
+</div>
+
+---
+
+## 📋 Structured Log Schema
+
+```json
+{
+  "log_id": "01KR3...",
+  "job_id": "01KR3...",
+  "agent_id": "rag",
+  "event_type": "agent_end",
+  "input_hash": "a1b2c3d4e5f6...",
+  "output_hash": "f6e5d4c3b2a1...",
+  "latency_ms": 1419.08,
+  "token_count": 325,
+  "policy_violation": false,
+  "violation_detail": null,
+  "metadata": {},
+  "timestamp": "2026-05-08T10:14:22Z"
+}
+```
+
+> Queryable via `GET /api/v1/trace/{job_id}` — reconstructs the exact sequence of agent decisions, tool calls, and handoffs in order.
+
+---
+
+## 📄 License
 
 MIT — free to use, modify, and distribute.
 
 ---
 
-*Built as a B.Tech capstone project demonstrating production-grade LLM engineering patterns.*
+<div align="center">
+
+*Built as a assessment project demonstrating production-grade LLM engineering patterns* 🤖
+
+⭐ If this project impressed you, consider giving it a star!
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=3,9,20&height=100&section=footer"/>
+
+</div>
